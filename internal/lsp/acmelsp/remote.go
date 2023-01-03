@@ -18,14 +18,16 @@ import (
 type RemoteCmd struct {
 	server proxy.Server
 	winid  int
+	offset int
 	Stdout io.Writer
 	Stderr io.Writer
 }
 
-func NewRemoteCmd(server proxy.Server, winid int) *RemoteCmd {
+func NewRemoteCmd(server proxy.Server, winid int, offset int) *RemoteCmd {
 	return &RemoteCmd{
 		server: server,
 		winid:  winid,
+		offset: offset,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
@@ -37,7 +39,9 @@ func (rc *RemoteCmd) getPosition() (pos *protocol.TextDocumentPositionParams, fi
 		return nil, "", fmt.Errorf("failed to to open window %v: %v", rc.winid, err)
 	}
 	defer w.CloseFiles()
-
+	if rc.offset != -1 {
+		return text.PositionQ0(w, rc.offset)
+	}
 	return text.Position(w)
 }
 

@@ -15,7 +15,7 @@ type nlOffsets struct {
 	leftover int   // runes leftover after last '\n'
 }
 
-func getNewlineOffsets(r io.Reader) (*nlOffsets, error) {
+func GetNewlineOffsets(r io.Reader) (*nlOffsets, error) {
 	br := bufio.NewReader(r)
 	o := 0
 	nl := []int{0}

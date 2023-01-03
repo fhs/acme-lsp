@@ -205,7 +205,7 @@ func (w *outputWin) Update(fw *focusWin, server proxy.Server, cmd string) {
 		}
 	}
 
-	rc := NewRemoteCmd(server, fw.id)
+	rc := NewRemoteCmd(server, fw.id, -1)
 	rc.Stdout = w.body
 	rc.Stderr = w.body
 	ctx := context.Background()

@@ -11,8 +11,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	p9client "github.com/fhs/9fans-go/plan9/client"
+	"github.com/fhs/acme-lsp/internal/acme"
 	"github.com/fhs/acme-lsp/internal/golang_org_x_tools/jsonrpc2"
 	"github.com/fhs/acme-lsp/internal/lsp"
 	"github.com/fhs/acme-lsp/internal/lsp/acmelsp"
@@ -185,12 +187,12 @@ func run(cfg *config.Config, args []string) error {
 		return fmt.Errorf("unknown assist command %q", args[0])
 	}
 
-	winid, err := getWinID()
+	winid, offset, err := getWinID()
 	if err != nil {
 		return err
 	}
 
-	rc := acmelsp.NewRemoteCmd(server, winid)
+	rc := acmelsp.NewRemoteCmd(server, winid, offset)
 
 	// In case the window has unsaved changes (it's dirty), sync changes with LSP server.
 	err = rc.DidChange(ctx)
@@ -230,16 +232,50 @@ func run(cfg *config.Config, args []string) error {
 	return fmt.Errorf("unknown command %q", args[0])
 }
 
-func getWinID() (int, error) {
+func parseAddress(addr string) (file string, offset int, err error) {
+	split := strings.Split(addr, ":")
+	file = split[0]
+	if len(split) > 1 {
+		split = strings.Split(split[1], ",")
+		offsetstring := split[len(split)-1]
+		offsettrim := strings.TrimPrefix(offsetstring, "#")
+		offset, err = strconv.Atoi(offsettrim)
+	}
+	return file, offset, err
+}
+
+func getWinID() (id int, offset int, err error) {
 	winid, err := getFocusedWinID(filepath.Join(p9client.Namespace(), "acmefocused"))
 	if err != nil {
-		return 0, fmt.Errorf("could not get focused window ID: %v", err)
+		return 0, -1, fmt.Errorf("could not get focused window ID: %v", err)
 	}
 	n, err := strconv.Atoi(winid)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse $winid: %v", err)
+		return 0, -1, fmt.Errorf("failed to parse $winid: %v", err)
 	}
-	return n, nil
+	// Now check for a chord command
+	acmeaddr := os.Getenv("acmeaddr")
+	if acmeaddr != "" {
+		if err != nil {
+			return 0, -1, fmt.Errorf("failed to to parse chord %v: %v", n, err)
+		}
+		file, offset, err := parseAddress(string(acmeaddr))
+		if err != nil {
+			return n, -1, nil
+		}
+		// Find the file in the index
+		windows, err := acme.Windows()
+		if err != nil {
+			return n, -1, nil
+		}
+		for _, w := range windows {
+			if w.Name == file {
+				return w.ID, offset, nil
+			}
+		}
+		fmt.Println(file, offset)
+	}
+	return n, -1, nil
 }
 
 func dirsOrCurrentDir(dirs []string) ([]protocol.WorkspaceFolder, error) {

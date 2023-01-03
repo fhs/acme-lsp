@@ -55,7 +55,7 @@ func WindowRemoteCmd(ss *ServerSet, fm *FileManager, winid int) (*RemoteCmd, err
 		return nil, fmt.Errorf("DidChange failed: %v", err)
 	}
 
-	return NewRemoteCmd(srv.Client, winid), nil
+	return NewRemoteCmd(srv.Client, winid, -1), nil
 }
 
 func getLine(p string, l int) string {
