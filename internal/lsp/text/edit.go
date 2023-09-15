@@ -4,6 +4,7 @@ package text
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"sort"
 	"strings"
 
@@ -127,6 +128,7 @@ func ToURI(filename string) protocol.DocumentURI {
 // ToPath converts URI to filename.
 func ToPath(uri protocol.DocumentURI) string {
 	filename, _ := CutPrefix(string(uri), "file://")
+	filename, _ = url.PathUnescape(filename)
 	return filename
 }
 
