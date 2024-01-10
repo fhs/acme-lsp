@@ -99,8 +99,18 @@ func (rc *RemoteCmd) Completion(ctx context.Context, kind CompletionKind) error 
 		return err
 	}
 
-	if (kind == CompleteInsertFirstMatch && len(result.Items) >= 1) || (kind == CompleteInsertOnlyMatch && len(result.Items) == 1) {
-		textEdit := result.Items[0].TextEdit
+	var items []protocol.CompletionItem
+	switch val := result.Value; val.(type) {
+	case protocol.CompletionList:
+		items = val.(protocol.CompletionList).Items
+	case []protocol.CompletionItem:
+		items = val.([]protocol.CompletionItem)
+	default:
+		return fmt.Errorf("unknown Completion result type: %T", val)
+	}
+
+	if (kind == CompleteInsertFirstMatch && len(items) >= 1) || (kind == CompleteInsertOnlyMatch && len(items) == 1) {
+		textEdit := items[0].TextEdit
 		if textEdit == nil {
 			// TODO(fhs): Use insertText or label instead.
 			return fmt.Errorf("nil TextEdit in completion item")
@@ -109,18 +119,18 @@ func (rc *RemoteCmd) Completion(ctx context.Context, kind CompletionKind) error 
 			return fmt.Errorf("failed to apply completion edit: %v", err)
 		}
 
-		if len(result.Items) == 1 {
+		if len(items) == 1 {
 			return nil
 		}
 	}
 
 	var sb strings.Builder
 
-	if len(result.Items) == 0 {
+	if len(items) == 0 {
 		fmt.Fprintf(&sb, "no completion\n")
 	}
 
-	for _, item := range result.Items {
+	for _, item := range items {
 		fmt.Fprintf(&sb, "%v\t%v\n", item.Label, item.Detail)
 	}
 
@@ -151,11 +161,32 @@ func (rc *RemoteCmd) Definition(ctx context.Context, print bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get position: %v", err)
 	}
-	locations, err := rc.server.Definition(ctx, &protocol.DefinitionParams{
+	orResultDef, err := rc.server.Definition(ctx, &protocol.DefinitionParams{
 		TextDocumentPositionParams: *pos,
 	})
 	if err != nil {
 		return fmt.Errorf("bad server response: %v", err)
+	}
+	var locations []protocol.Location
+	switch val := orResultDef.Value; val.(type) {
+	case protocol.Definition:
+		switch orDefVal := val.(protocol.Definition).Value; orDefVal.(type) {
+		case protocol.Location:
+			locations = []protocol.Location{orDefVal.(protocol.Location)}
+		case []protocol.Location:
+			locations = orDefVal.([]protocol.Location)
+		default:
+			return fmt.Errorf("unknown Definition location type: %T", orDefVal)
+		}
+	case []protocol.DefinitionLink:
+		links := val.([]protocol.DefinitionLink)
+		locs := make([]protocol.Location, len(links))
+		for i, link := range links {
+			locs[i] = protocol.Location{link.TargetURI, link.TargetSelectionRange}
+		}
+		locations = locs
+	default:
+		return fmt.Errorf("unknown Definition result type: %T", val)
 	}
 	if print {
 		return PrintLocations(rc.Stdout, locations)

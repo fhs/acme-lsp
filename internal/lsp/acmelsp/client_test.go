@@ -191,17 +191,21 @@ func main() {
 			if err != nil {
 				t.Fatalf("Definition failed: %v", err)
 			}
-			want := []protocol.Location{
-				{
-					URI: uri,
-					Range: protocol.Range{
-						Start: protocol.Position{
-							Line:      4,
-							Character: 5,
-						},
-						End: protocol.Position{
-							Line:      4,
-							Character: 10,
+			want := &protocol.Or_Result_textDocument_definition{
+				Value: protocol.Definition{
+					Value: []protocol.Location{
+						{
+							URI: uri,
+							Range: protocol.Range{
+								Start: protocol.Position{
+									Line:      4,
+									Character: 5,
+								},
+								End: protocol.Position{
+									Line:      4,
+									Character: 10,
+								},
+							},
 						},
 					},
 				},

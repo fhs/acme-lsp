@@ -48,7 +48,7 @@ func (s *proxyServer) DidChangeWorkspaceFolders(ctx context.Context, params *pro
 	return s.ss.DidChangeWorkspaceFolders(ctx, params.Event.Added, params.Event.Removed)
 }
 
-func (s *proxyServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.CompletionList, error) {
+func (s *proxyServer) Completion(ctx context.Context, params *protocol.CompletionParams) (*protocol.Or_Result_textDocument_completion, error) {
 	srv, err := serverForURI(s.ss, params.TextDocumentPositionParams.TextDocument.URI)
 	if err != nil {
 		return nil, fmt.Errorf("Completion: %v", err)
@@ -56,7 +56,7 @@ func (s *proxyServer) Completion(ctx context.Context, params *protocol.Completio
 	return srv.Client.Completion(ctx, params)
 }
 
-func (s *proxyServer) Definition(ctx context.Context, params *protocol.DefinitionParams) ([]protocol.Location, error) {
+func (s *proxyServer) Definition(ctx context.Context, params *protocol.DefinitionParams) (*protocol.Or_Result_textDocument_definition, error) {
 	srv, err := serverForURI(s.ss, params.TextDocumentPositionParams.TextDocument.URI)
 	if err != nil {
 		return nil, fmt.Errorf("Definition: %v", err)

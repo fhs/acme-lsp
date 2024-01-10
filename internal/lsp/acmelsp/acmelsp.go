@@ -219,6 +219,32 @@ func CodeActionAndFormat(ctx context.Context, server FormatServer, doc *protocol
 	return nil
 }
 
+func orsToEdits(ors []protocol.Or_TextDocumentEdit_edits_Elem) []protocol.TextEdit {
+	edits := make([]protocol.TextEdit, len(ors))
+	for i, or := range ors {
+		switch or.Value.(type) {
+		case protocol.AnnotatedTextEdit:
+			edits[i] = or.Value.(protocol.AnnotatedTextEdit).TextEdit
+		case protocol.TextEdit:
+			edits[i] = or.Value.(protocol.TextEdit)
+		case nil:
+			edits[i] = protocol.TextEdit{}
+		}
+	}
+	return edits
+}
+
+func executeCommand(ctx context.Context, server FormatServer, doc *protocol.TextDocumentIdentifier, c *protocol.Command) error {
+	_, err := server.ExecuteCommandOnDocument(ctx, &proxy.ExecuteCommandOnDocumentParams{
+		TextDocument: *doc,
+		ExecuteCommandParams: protocol.ExecuteCommandParams{
+			Command:   c.Command,
+			Arguments: c.Arguments,
+		},
+	})
+	return err
+}
+
 func editWorkspace(we *protocol.WorkspaceEdit) error {
 	if we == nil {
 		return nil // no changes to apply
@@ -230,7 +256,7 @@ func editWorkspace(we *protocol.WorkspaceEdit) error {
 		changes := make(map[protocol.DocumentURI][]protocol.TextEdit)
 		for _, dc := range we.DocumentChanges {
 			if tde := dc.TextDocumentEdit; tde != nil {
-				changes[tde.TextDocument.TextDocumentIdentifier.URI] = tde.Edits
+				changes[tde.TextDocument.TextDocumentIdentifier.URI] = orsToEdits(tde.Edits)
 			}
 		}
 		we.Changes = changes

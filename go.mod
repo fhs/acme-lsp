@@ -9,3 +9,6 @@ require (
 	github.com/google/go-cmp v0.3.0
 	github.com/sourcegraph/jsonrpc2 v0.2.0
 )
+
+// TODO: merge github.com/fhs/go-lsp-internal PR, update dependency and delete next line
+replace github.com/fhs/go-lsp-internal => github.com/cloudspinner/go-lsp-internal v0.0.0-20240109201957-d9537c30fb78

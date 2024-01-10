@@ -155,8 +155,8 @@ func (c *Client) init(conn net.Conn, cfg *ClientConfig) error {
 			Capabilities: protocol.ClientCapabilities{
 				TextDocument: protocol.TextDocumentClientCapabilities{
 					CodeAction: protocol.CodeActionClientCapabilities{
-						CodeActionLiteralSupport: protocol.PCodeActionLiteralSupportPCodeAction{
-							CodeActionKind: protocol.FCodeActionKindPCodeActionLiteralSupport{
+						CodeActionLiteralSupport: protocol.ClientCodeActionLiteralOptions{
+							CodeActionKind: protocol.ClientCodeActionKindOptions{
 								ValueSet: []protocol.CodeActionKind{
 									protocol.SourceOrganizeImports,
 								},
@@ -167,8 +167,8 @@ func (c *Client) init(conn net.Conn, cfg *ClientConfig) error {
 						HierarchicalDocumentSymbolSupport: true,
 					},
 					Completion: protocol.CompletionClientCapabilities{
-						CompletionItem: protocol.PCompletionItemPCompletion{
-							TagSupport: protocol.FTagSupportPCompletionItem{
+						CompletionItem: protocol.ClientCompletionItemOptions{
+							TagSupport: &protocol.CompletionItemTagOptions{
 								ValueSet: []protocol.CompletionItemTag{},
 							},
 						},

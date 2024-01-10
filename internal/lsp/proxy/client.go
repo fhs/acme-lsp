@@ -99,6 +99,11 @@ func (c *NotImplementedClient) DiagnosticRefresh(context.Context) error {
 	return fmt.Errorf("workspace/diagnostic/refresh not implemented")
 }
 
+// workspace/foldingRange/refresh
+func (c *NotImplementedClient) FoldingRangeRefresh(context.Context) error {
+	return fmt.Errorf("workspace/foldingRange/refresh not implemented")
+}
+
 // workspace/inlayHint/refresh
 func (c *NotImplementedClient) InlayHintRefresh(context.Context) error {
 	return fmt.Errorf("workspace/inlayHint/refresh not implemented")
